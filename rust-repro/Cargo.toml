@@ -1,0 +1,11 @@
+[package]
+name = "execute-repro"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+# Standard minijinja from crates.io — demonstrates the render-context vs
+# global scoping principle that underlies the dbt-fusion library bug.
+# (The exact failure mode in dbt-fusion requires its internal template
+# dispatch machinery; see README for full context.)
+minijinja = { version = "2", features = ["macros"] }
