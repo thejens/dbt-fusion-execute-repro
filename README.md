@@ -42,9 +42,6 @@ sees it as undefined, and silently skips all SQL.
 
 ## Minimal repro — [`rust-repro/`](rust-repro/)
 
-The Rust program in `rust-repro/` demonstrates why render-context variables cannot
-be relied upon across template boundaries, whereas Jinja globals always are:
-
 ```sh
 cd rust-repro
 cargo run
@@ -53,14 +50,29 @@ cargo run
 **Output:**
 
 ```
-BUG  — execute in caller context only : [SQL SILENTLY SKIPPED — execute was falsy/undefined]
-FIXED — execute as Jinja global       : [SQL SENT TO WAREHOUSE]
+minijinja import (context propagates) : [EXECUTED]
+
+BUG  — fresh template eval, no global  : [SQL SILENTLY SKIPPED — execute was falsy/undefined]
+FIXED — execute as Jinja global        : [SQL SENT TO WAREHOUSE]
 ```
 
-The program renders `statement.sql` (which checks `if execute`) in a fresh context,
-mirroring what happens when dbt-fusion's template dispatch evaluates it independently
-of the materialization's render context. With `execute` only in the caller's context
-it is undefined; as a global it is always visible.
+The program shows three cases:
+
+1. **Standard minijinja `{% from ... import ... %}`** propagates the render context
+   into imported macros, so `execute` is visible. This is **not** the failure mode.
+
+2. **Fresh template evaluation** (simulating dbt-fusion's internal template dispatch,
+   which re-evaluates `statement.sql` independently): the materialization has
+   `execute=True` in its render context, but that context does not carry into the
+   fresh evaluation of `statement.sql`. Execute is undefined; SQL is silently skipped.
+
+3. **Global fix**: `env.add_global("execute", ...)` attaches the value to the
+   Environment itself. Every template render — including fresh dispatched evaluations —
+   sees it without exception.
+
+> **Caveat:** the exact failure mode in dbt-fusion requires its internal template
+> registry dispatch, which cannot be reproduced here without the full library. The
+> fresh-render scenario above demonstrates the underlying principle.
 
 ## Call chain (dbt project reference)
 
