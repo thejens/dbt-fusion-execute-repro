@@ -1,0 +1,7 @@
+execute_repro:
+  target: dev
+  outputs:
+    dev:
+      type: duckdb
+      path: "dev.duckdb"
+      threads: 1

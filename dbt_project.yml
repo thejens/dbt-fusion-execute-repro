@@ -1,0 +1,13 @@
+name: execute_repro
+version: "1.0.0"
+config-version: 2
+
+profile: execute_repro
+
+model-paths: ["models"]
+macro-paths: ["macros"]
+seed-paths: ["seeds"]
+
+models:
+  execute_repro:
+    +materialized: table
